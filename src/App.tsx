@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { DragEvent, useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -8,6 +8,7 @@ import {
   useNodesState,
   useEdgesState,
   type OnConnect,
+  useReactFlow,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -15,13 +16,63 @@ import "@xyflow/react/dist/style.css";
 import { initialNodes, nodeTypes } from "./nodes";
 import { initialEdges, edgeTypes } from "./edges";
 import { DevTools } from "@/components/devtools";
+import { NodeToolbox } from "./components/drag-toolbar";
+import { useDnD } from "@/lib/dnd-context";
+import type { PipeEdge } from "./edges/types";
+
+let id = 0;
+const getId = () => `dndnode_${id++}`;
 
 export default function App() {
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const onConnect: OnConnect = useCallback(
-    (connection) => setEdges((edges) => addEdge(connection, edges)),
+    (connection) => {
+      const customEdge: PipeEdge = {
+        id: getId(),
+        type: "pipe",
+        ...connection,
+      };
+      setEdges((edges) => addEdge(customEdge, edges));
+    },
     [setEdges],
+  );
+
+  const { screenToFlowPosition } = useReactFlow();
+  const [type] = useDnD();
+
+  const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+  }, []);
+
+  const onDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      if (!type) {
+        return;
+      }
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const newNode: Node = {
+        // @ts-expect-error ts bs
+        id: getId(),
+        type: "valve",
+        position,
+        data: { label: `${type} node` },
+      };
+
+      // @ts-expect-error ts bs
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [screenToFlowPosition, setNodes, type],
   );
 
   return (
@@ -33,12 +84,15 @@ export default function App() {
       edgeTypes={edgeTypes}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDrop={onDrop}
+      onDragOver={onDragOver}
       fitView
     >
       <Background />
       <MiniMap />
       <Controls />
       <DevTools />
+      <NodeToolbox />
     </ReactFlow>
   );
 }
