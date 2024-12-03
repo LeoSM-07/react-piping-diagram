@@ -1,0 +1,13 @@
+.valve-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.drag-handle__custom {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: teal;
+  margin-left: 15px;
+  border-radius: 50%;
+}
