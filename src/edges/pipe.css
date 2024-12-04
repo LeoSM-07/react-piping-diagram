@@ -1,5 +1,5 @@
 @keyframes dash {
   to {
-    stroke-dashoffset: -200;
+    stroke-dashoffset: -120;
   }
 }

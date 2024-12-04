@@ -87,6 +87,8 @@ export default function App() {
       onDrop={onDrop}
       onDragOver={onDragOver}
       fitView
+      snapGrid={[10, 10]}
+      snapToGrid
     >
       <Background />
       <MiniMap />

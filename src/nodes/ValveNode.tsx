@@ -1,19 +1,35 @@
-import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  type NodeProps,
+  useReactFlow,
+  useNodesData,
+  useHandleConnections,
+} from "@xyflow/react";
 import "./valve.css";
 
-import { type ValveNode } from "./types";
+import type { ValveNode, TankNode } from "./types";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 export function ValveNode({ id, data }: NodeProps<ValveNode>) {
   const { updateNodeData } = useReactFlow();
 
-  // const connections = useHandleConnections({
-  //   type: "target",
-  // });
+  const connections = useHandleConnections({
+    type: "target",
+  });
 
-  // const nodesData = useNodesData<ValveNode>(
-  //   connections.map((connection) => connection.source),
-  // );
+  const priorValveData = useNodesData<ValveNode | TankNode>(
+    connections.map((connection) => connection.source),
+  );
+
+  useEffect(() => {
+    updateNodeData(id, {
+      hasFlow: priorValveData.some(
+        (node) => node.data.hasFlow && node.data.isOpen,
+      ),
+    });
+  }, [id, updateNodeData, priorValveData]);
 
   return (
     // We add this class to use the same styles as React Flow's default nodes.
